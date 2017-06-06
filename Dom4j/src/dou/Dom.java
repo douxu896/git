@@ -1,9 +1,7 @@
 package dou;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.IllegalFormatException;
@@ -15,57 +13,55 @@ import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
-import org.dom4j.io.XMLWriter;
-import com.mysql.jdbc.PreparedStatement;
-
-import opennlp.tools.sentdetect.SentenceDetectorME;
-import opennlp.tools.sentdetect.SentenceModel;
 
 public class Dom {
-
 	public static void main(String[] args) throws DocumentException, SQLException {
 		// TODO Auto-generated method stub
 		SAXReader reader = new SAXReader();
 		reader.setEntityResolver(new IgnoreDTDEntityResolver());
-		String path = "/Users/douxu/Desktop/Adm_Policy_Ment_Health" + "/Adm_Policy_Ment_Health_2010_Mar_24_37(1-2)_15-26.nxml";
+		String path = "/Users/douxu/Desktop/Adm_Policy_Ment_Health"
+				+ "/Adm_Policy_Ment_Health_2010_Mar_30_37(1-2)_128-131.nxml";
 		Document doc = reader.read(new File(path));
 		// get title,abstract,body
 		Element title = (Element) doc.selectObject("/article/front/article-meta/title-group/article-title");
 		Element abstractt = (Element) doc.selectObject("/article/front/article-meta/abstract");
 		Element body = (Element) doc.selectObject("article/body");
-		List<String> data = new ArrayList<String>();
 		System.out.println(title.getName() + ":" + title.getText());
 		System.out.println(abstractt.getName() + ":");
-		Text(abstractt, data);
+		//Text(abstractt);
+		System.out.println("");
 		System.out.println(body.getName() + ":");
-		Text(body, data);
-		JDBC db = new JDBC();
-		Sentence sen;
-		String sql = "insert into sentence(citation,sentences) values (?,?)";
+		Text(body);
 	}
 
-	private static void Text(Element element, List<String> data) {
+	private static void Text(Element element) {
 		Iterator it = element.elementIterator();
 		while (it.hasNext()) {
 			Element ele = (Element) it.next();
-			//System.out.println("name:" + ele.getName());
 			if (ele.getName().equals("p")) {
-				int num = ele.content().size();
-				List content = ele.content();
-				//System.out.println("元素个数：" + num);
-				String Name = ele.getName();
-				for (int cindex = 0; cindex < num; cindex++) {
-					Object first = content.get(cindex);
-					String firstText = getContentAsText(first);
-					System.out.print(firstText);
-				}
-				System.out.println(" ");
+				paragraph(ele);
 			} else {
-				/*if (!(ele.getText().equals(""))) {
-					System.out.println(ele.getText());
-				}*/
-				Text(ele, data);
+				Text(ele);
 			}
+		}
+	}
+
+	private static void paragraph(Element ele) {
+		// TODO 自动生成的方法存根
+		int num = ele.content().size();
+		List content = ele.content();
+		StringBuilder sb = new StringBuilder();
+		for (int cindex = 0; cindex < num; cindex++) {
+			Object first = content.get(cindex);
+			String firstText = getContentAsText(first);
+			sb.append(firstText);
+		}
+	//	System.out.print(sb.toString());
+		try {
+			StringSplice.stringSplice(sb.toString());
+		} catch (IllegalFormatException | SQLException | IOException e) {
+			// TODO 自动生成的 catch 块
+			e.printStackTrace();
 		}
 	}
 
@@ -74,18 +70,29 @@ public class Dom {
 			Node node = (Node) content;
 			int type = node.getNodeType();
 			switch (type) {
-			case 1:
+			case Node.ELEMENT_NODE:
+				Element m = (Element) content;
+				//if(m.attribute(0).)
+				Iterator it = m.attributeIterator();
+				while(it.hasNext()){
+					System.out.println("it"+);
+					if(it.toString().equals("bibr")){
+						System.out.println(node.getName() + "#" + node.getText());
+						return node.getName() + "#" + node.getText();	
+					}
+				}
+				
+				
+			case Node.TEXT_NODE:
 				return node.getText();
-			case 3:
-				return node.getText();
-
 			default:
+				System.out.println("");
+				System.out.println("other type: " + type);
 				break;
 			}
 		} else if (content instanceof String) {
 			return (String) content;
 		}
-
 		return "";
 	}
 }
