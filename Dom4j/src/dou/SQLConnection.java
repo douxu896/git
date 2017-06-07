@@ -6,7 +6,14 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+/**
+ * <p>
+ * <code>SQLConnection</code> is JDBC
+ * </p>
+ * 
+ * @author <a href="bjtu:15121684@bjtu.edu.cn">Emily </a>
+ * @version $Revision: 2.0 $
+ */
 public class SQLConnection {
 	static ResultSet RESULT = null;
 	public static Connection connection(String username, String password){
