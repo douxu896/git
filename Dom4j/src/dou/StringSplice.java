@@ -37,58 +37,83 @@ public class StringSplice {
 	 *                SqlException
 	 */
 	public static void stringSplice(String str) throws SQLException, IllegalFormatException, IOException {
-		Connection con = SQLConnection.connection("root", "123456");
+		
 		String[] line = Detector(str);
-		int total = 0;
+		//static int total = 0;
 		List<String> lines = new ArrayList<String>();
 		for (int i = 0; i < line.length; i++) {
-			if (line[i].endsWith("e.g")) {
-				lines.add(line[i] + ". " + line[i + 1]);
+			if ((line[i].endsWith("e.g") )||(line[i].endsWith("e.g.") ) ) {
+				lines.add(line[i] + line[i + 1]);
 				i++;
 			} else {
 				lines.add(line[i]);
 			}
 		}
 		for (int i = 0; i < lines.size(); i++) {
-			String[] a = Matchs(lines.get(i));
-			if (a != null) {
-				String authorAndYear = a[0];
-				String citation = a[1];
-				String context = "";
-				System.out.println("------------");
-				System.out.println(lines.size());
-				/** get context four sentences before citation and four sentences after citation */
-				for (int j = i - 4; j < i + 5; j++) {
-					if (j >= 0 && j < lines.size() && j != i) {
-						context += lines.get(j);
-						System.out.println("con: " +i+"   "+j+"  "+lines.get(j));
+			String[][] result = Matchs(lines.get(i));
+			if (result != null) {
+				int temp = 0 ;
+				while(result[0][temp] != null){
+					String authorAndYear = result[0][temp];
+	
+					temp++;
+					String contextall = "";
+					/** get context four sentences before citation and four sentences after citation */
+					for (int j = i - 4; j < i + 5; j++) {
+						if (j >= 0 && j < lines.size() && j != i) {
+							contextall += lines.get(j);
+					//		System.out.println("con: " +i+"   "+j+"  "+lines.get(j));
+						}
 					}
-				}
-				//System.out.println("------------");
-				total++;
-				System.out.println("id:" + authorAndYear);
-				System.out.println("citation:" + citation);
-				System.out.println("context:" + context);
-				System.out.println("total:" +total);
-				String sql = "select * from info where id = ?;";
-				if (SQLConnection.findByAuthorAndYear(sql, con, authorAndYear)) {
-					String s2 = citation + SQLConnection.RESULT.getString(2);
-					String s3 = context + SQLConnection.RESULT.getString(3);
-					String updateSQL = "update info set citation = ?, context = ? where id = ?;";
-					PreparedStatement pre = con.prepareStatement(updateSQL);
-					pre.setString(1, s2);
-					pre.setString(2, s3);
-					pre.setString(3, authorAndYear);
-					pre.executeUpdate();
-				} else {
-					String insertSQL = "insert into info values(?,?,?);";
-					PreparedStatement pre = con.prepareStatement(insertSQL);
-					pre.setString(1, authorAndYear);
-					pre.setString(2, citation);
-					pre.setString(3, context);
-					pre.executeUpdate();
-				}
+					/** drop xref# from context  */
+					String context = contextall.replaceAll("xref#", "");
+					String citations = result[1][0];
+					String citation = citations.replaceAll("xref#", "");
+					if(authorAndYear.contains(";")){
+						String id1[]  = authorAndYear.split(";");
+						for(String id:id1){		
+							id = id.replaceAll("xref#", "");
+							id = id.replaceFirst("^ ", "");
+							id = id.replaceFirst("$ ", "");
+						//	System.out.println(lines.size());	
+							Storeinmysql(id,citation,context);
+						}				
+					}
+					else{
+						String id = authorAndYear.replaceAll("xref#", "");
+						id = id.replaceFirst("^ ", "");
+						id = id.replaceFirst("$ ", "");			
+						Storeinmysql(id,citation,context);	
+					}
+				}				
 			}
+		}
+	}
+
+	private static void Storeinmysql(String id, String citation, String context) throws SQLException {
+		// TODO 自动生成的方法存根
+		System.out.println("------------");
+		System.out.println("id:" + id);
+		System.out.println("citation:" + citation);
+		System.out.println("context:" + context);
+		Connection con = SQLConnection.connection("root", "123456");
+		String sql = "select * from info where id = ?;";
+		if (SQLConnection.findByAuthorAndYear(sql, con, id)) {
+			String s2 = citation + SQLConnection.RESULT.getString(2);
+			String s3 = context + SQLConnection.RESULT.getString(3);
+			String updateSQL = "update info set citation = ?, context = ? where id = ?;";
+			PreparedStatement pre = con.prepareStatement(updateSQL);
+			pre.setString(1, s2);
+			pre.setString(2, s3);
+			pre.setString(3, id);
+			pre.executeUpdate();
+		} else {
+			String insertSQL = "insert into info values(?,?,?);";
+			PreparedStatement pre = con.prepareStatement(insertSQL);
+			pre.setString(1, id);
+			pre.setString(2, citation);
+			pre.setString(3, context);
+			pre.executeUpdate();
 		}
 	}
 
@@ -98,34 +123,37 @@ public class StringSplice {
 	 *
 	 * @throws
 	 */
-	public static String[] Matchs(String sentence) {
+	public static String[][] Matchs(String sentence) {
 		// 正则表达式
-		//String regEx = "\\(.*?xref#[0-9]{4}(.*)?\\)";
-		String regEx = "\\(.*?[0-9]{4}(.*)?\\)";
+		String regEx = "\\(.*?xref#[0-9]{4}(.*)?\\)";
 		Pattern pattern = Pattern.compile(regEx);
 		Matcher matcher = pattern.matcher(sentence);
 		if (!matcher.find()) {
 			return null;
 		} else {
-			String b = matcher.group();
-			String a = matcher.replaceFirst(" ");
+			/** get a sentences contains citation */
+			String b = matcher.group();  
 			String[] m = b.split("(\\()|(\\))");
-			String id = null;
-			for (String pl : m) {
-			//	if (pl.toString().matches(".*?xref#[0-9]{4}.*?")) {
-					if (pl.toString().matches(".*?[0-9]{4}.*?")) {
-					id = pl;
+			String[] id =new String[10] ;
+			int i = 0 ;
+			String mm  = null ;
+			for (String pl : m) {		
+				if (pl.toString().matches(".*?xref#[0-9]{4}.*?")) {
+					id[i] = pl;
+				//	System.out.println("id:"+i + id[i]);
+					 mm = sentence.replace("(" + id[i]+ ")", "");
+					i++;
 				}
 			}
+			/** id  = "Garland et al. xref#2001" */
 			/** drop "xref#" */
-			/*String regEx2 = "xref#";
-			Pattern pattern2 = Pattern.compile(regEx2);
-			Matcher matcher2 = pattern2.matcher(id);
-			String c = matcher2.replaceAll("");*/
+		//	String c =id.replaceAll("xref#","");
 			// System.out.println("cit:" + c);
-			String cia = sentence.replace("(" + id + ")", "");
+		
+			String[] cia = {mm};
+		//	System.out.println("cia:" + cia[0]);
 			// System.out.println("citations:" + cia);
-			String[] result = { id, cia };
+			String[][] result = { id, cia };
 			return result;
 		}
 	}

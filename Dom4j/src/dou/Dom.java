@@ -30,11 +30,10 @@ public class Dom {
 		reader.setEntityResolver(new IgnoreDTDEntityResolver());
 		/** input path */
 		String path = "/Users/douxu/Desktop/Adm_Policy_Ment_Health"
-				+ "/Adm_Policy_Ment_Health_2010_May_1_37(3)_254-269.nxml";
+				+ "/Adm_Policy_Ment_Health_2012_Jul_20_39(4)_258-267.nxml";
 		Document doc = reader.read(new File(path));
-		// Element title = (Element)
-		// doc.selectObject("/article/front/article-meta/title-group/article-title");
-		
+		 Element title = (Element)doc.selectObject("/article/front/article-meta/title-group/article-title");
+		System.out.println(title.getName() + ":" + title.getText());
 	    /** use xpath to location abstract */
 		Element abstractt = (Element) doc.selectObject("/article/front/article-meta/abstract");
 		/**use xpath to location main body */
@@ -86,11 +85,12 @@ public class Dom {
 		for (int cindex = 0; cindex < num; cindex++) {
 			Object first = content.get(cindex);
 			String firstText = getContentAsText(first);
-			//System.out.println(firstText);
 			sb.append(firstText);
 		}
+		
 		/** splice the text  */
 		try {
+		//	System.out.println(sb.toString());
 			StringSplice.stringSplice(sb.toString());
 		} catch (IllegalFormatException | SQLException | IOException e) {
 			// TODO 自动生成的 catch 块
@@ -123,8 +123,7 @@ public class Dom {
 					/** value of attribute*/
 					String value = attr.getValue();
 					if (name.equals("ref-type") && value.equals("bibr")) {
-						//return node.getName() + "#" + node.getText();
-						return node.getText();
+						return node.getName() + "#" + node.getText();
 					} else
 						return node.getText();
 				} else
