@@ -28,7 +28,7 @@ public class StringSplice {
 	/**
 	 * 
 	 * @param str
-	 *            the context of a paragraph
+	 *        the context of a paragraph
 	 * @throws SQLException
 	 * @throws IOException
 	 * @throws IllegalFormatException
@@ -115,6 +115,7 @@ public class StringSplice {
 			pre.setString(3, context);
 			pre.executeUpdate();
 		}
+		con.close();
 	}
 
 	/**
@@ -125,7 +126,8 @@ public class StringSplice {
 	 */
 	public static String[][] Matchs(String sentence) {
 		// 正则表达式
-		String regEx = "\\(.*?xref#[0-9]{4}(.*)?\\)";
+		//String regEx = "\\(.*?xref#[0-9]{4}(.*)?\\)";
+		String regEx = "\\(.*?xref#(.*)?\\)";
 		Pattern pattern = Pattern.compile(regEx);
 		Matcher matcher = pattern.matcher(sentence);
 		if (!matcher.find()) {
@@ -138,7 +140,7 @@ public class StringSplice {
 			int i = 0 ;
 			String mm  = null ;
 			for (String pl : m) {		
-				if (pl.toString().matches(".*?xref#[0-9]{4}.*?")) {
+				if (pl.toString().matches(".*?xref#.*?")) {
 					id[i] = pl;
 				//	System.out.println("id:"+i + id[i]);
 					 mm = sentence.replace("(" + id[i]+ ")", "");
