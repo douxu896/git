@@ -33,7 +33,7 @@ public class Dom {
 		/** input path */
 		// String inpath =
 		// "/Users/douxu/Desktop/xml/Acupunct_Med/Acupunct_Med_2010_Jun_1_28(2)_78-82.nxml";
-		String inpath = "/Users/douxu/Desktop/Citationnum/1/Acta_Histochem_Cytochem";
+		String inpath = "/Users/douxu/Desktop/Citationnum/1/Acta_Neuropathol";
 		String outfile = File.separator + "Users" + File.separator + "douxu" + File.separator + "Desktop"
 				+ File.separator + "CSV";
 		FilePath.createDir(outfile);

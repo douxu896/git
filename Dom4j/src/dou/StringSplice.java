@@ -1,5 +1,6 @@
 package dou;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.IllegalFormatException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,7 +42,7 @@ public class StringSplice {
 	 */
 	public static void stringSplice(String str, String papername)
 			throws SQLException, IllegalFormatException, IOException {
-
+		List<String> dataList = new ArrayList<String>();
 		List<String> lines = Detector(str);
 		for (int i = 0; i < lines.size(); i++) {
 			// System.out.println(lines.get(i));
@@ -74,7 +76,10 @@ public class StringSplice {
 							id = getid(ids);
 							for (String mm : id) {
 								if (mm != null) {
-									// System.out.println(mm);
+									// System.out.println(mm);		
+									dataList.add(papername + "#" + mm+","+citation+","+context);
+								//	CSVUtils.createCSVFile(dataList, null,"/Users/douxu/Desktop/CSV", "data") ;
+								//	CSVUtils.exportCsv(new File("/Users/douxu/Desktop/CSV/data.csv"), dataList);
 									Storeinmysql(papername + "#" + mm, citation, context);
 								}
 							}
@@ -98,16 +103,19 @@ public class StringSplice {
 		String[] mm = new String[30];
 		
 		if (id.contains("–")) {
+			System.out.println("-------"+id);
 			String id2[] = id.split("–");
 			String x = id2[0];
 			x = x.replaceAll("xref#", "");
 			x = x.replaceFirst("^ ", "");
 			x = x.replaceFirst("$ ", "");
+			x = x.replaceAll("\\D*", "");
 			int a = Integer.parseInt(x);
 			String y = id2[1];
 			y = y.replaceAll("xref#", "");
 			y = y.replaceFirst("^ ", "");
 			y = y.replaceFirst("$ ", "");
+			y = y.replaceAll("\\D*", "");
 			int b = Integer.parseInt(y);
 			int ab = a;
 			int i = 0;
@@ -120,6 +128,7 @@ public class StringSplice {
 			id = id.replaceAll("xref#", "");
 			id = id.replaceFirst("^ ", "");
 			id = id.replaceFirst("$ ", "");
+			id = id.replaceAll("\\D*", "");
 			mm[0] =id;
 		}
 		return mm;
@@ -131,12 +140,12 @@ public class StringSplice {
 		System.out.println("citation:" + citation);
 		System.out.println("context:" + context);
 		Connection con = SQLConnection.connection("root", "123456");
-		String sql = "select * from info where id = ?;";
+		String sql = "select * from info1 where id = ?;";
 		if (SQLConnection.findByAuthorAndYear(sql, con, id)) {
 			if(!SQLConnection.RESULT.getString(2).contains(citation)){
 				String s2 = SQLConnection.RESULT.getString(2) + citation;
 				String s3 = SQLConnection.RESULT.getString(3) + context;
-				String updateSQL = "update info set citation = ?, context = ? where id = ?;";
+				String updateSQL = "update info1 set citation = ?, context = ? where id = ?;";
 				PreparedStatement pre = con.prepareStatement(updateSQL);
 				pre.setString(1, s2);
 				pre.setString(2, s3);
@@ -145,7 +154,7 @@ public class StringSplice {
 			}
 			
 		} else {
-			String insertSQL = "insert into info values(?,?,?);";
+			String insertSQL = "insert into info1 values(?,?,?);";
 			PreparedStatement pre = con.prepareStatement(insertSQL);
 			pre.setString(1, id);
 			pre.setString(2, citation);
