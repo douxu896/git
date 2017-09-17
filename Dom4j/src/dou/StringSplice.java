@@ -40,7 +40,7 @@ public class StringSplice {
 	 * @exception ClassNotFoundException
 	 *                SqlException
 	 */
-	public static void stringSplice(String str, String papername)
+	public static void stringSplice(String str, String papername,String outdir)
 			throws SQLException, IllegalFormatException, IOException {
 		List<String> dataList = new ArrayList<String>();
 		List<String> lines = Detector(str);
@@ -51,51 +51,60 @@ public class StringSplice {
 			String[] id = new String[30];
 				String citation = lines.get(i);
 				//lines.set(i, citation);
-				 citation = citation.replaceAll("xref#", "");
-				String contextall = "";
-				/**
-				 * get context four sentences before citation and four sentences
-				 * after citation
-				 */
-				for (int j = i - 4; j < i + 5; j++) {
-					if (j >= 0 && j < lines.size() && j != i) {
-						contextall += lines.get(j);
-						// System.out.println("con: " +i+" "+j+ "
-						// "+lines.get(j));
-					}
-				}
-				/** drop xref# from context */
-				String context = contextall.replaceAll("xref#", "");
-				int temp = 0;
-				while ((temp < result[0].length) && (result[0][temp] != null)) {
-					String authorAndYear = result[0][temp];
-					temp++;
-					if (authorAndYear.contains(",")) {
-						String id1[] = authorAndYear.split(",");
-						for (String ids : id1) {
-							id = getid(ids);
-							for (String mm : id) {
-								if (mm != null) {
-									// System.out.println(mm);		
-									dataList.add(papername + "#" + mm+","+citation+","+context);
-								//	CSVUtils.createCSVFile(dataList, null,"/Users/douxu/Desktop/CSV", "data") ;
-								//	CSVUtils.exportCsv(new File("/Users/douxu/Desktop/CSV/data.csv"), dataList);
-									Storeinmysql(papername + "#" + mm, citation, context);
-								}
-							}
-						}
-					} else {
-						id = getid(authorAndYear);
-						for (String mm : id) {
-							if (mm != null) {
-								// System.out.println(mm);
-								Storeinmysql(papername + "#" + mm, citation, context);
-							}
-						}
-					}
-				}
+				//删除xref#，变为[2]
+//				 citation = citation.replaceAll("xref#", "");
+				//删除 [xref#15]
+				 citation = citation.replaceAll("\\[xref#([\\s\\S]*?)\\]", "");
+//				 System.out.println(citation);
+					dataList.add(citation);	
+					
+//				String contextall = "";
+//				/**
+//				 * get context four sentences before citation and four sentences
+//				 * after citation
+//				 */
+//				for (int j = i - 4; j < i + 5; j++) {
+//					if (j >= 0 && j < lines.size() && j != i) {
+//						contextall += lines.get(j);
+//						// System.out.println("con: " +i+" "+j+ "
+//						// "+lines.get(j));
+//					}
+//				}
+//				/** drop xref# from context */
+//				String context = contextall.replaceAll("xref#", "");
+//				int temp = 0;
+//				while ((temp < result[0].length) && (result[0][temp] != null)) {
+//					String authorAndYear = result[0][temp];
+//					temp++;
+//					if (authorAndYear.contains(",")) {
+//						String id1[] = authorAndYear.split(",");
+//						for (String ids : id1) {
+//							id = getid(ids);
+//							for (String mm : id) {
+//								if (mm != null) {
+//									// System.out.println(mm);		
+////									CSVUtils.createCSVFile(dataList, null,"/Users/douxu/Desktop/CSV", "data") ;
+////									CSVUtils.exportCsv(new File("/Users/douxu/Desktop/CSV/"+papername+".txt"), dataList);
+////									Storeinmysql(papername + "#" + mm, citation, context);
+//								}
+//							}
+//						}
+//					} else {
+//						id = getid(authorAndYear);
+//						for (String mm : id) {
+//							if (mm != null) {
+//								// System.out.println(mm);
+//							
+////								Storeinmysql(papername + "#" + mm, citation, context);
+//							}
+//						}
+//					}
+//				}
 			}
 		}
+		//只把引文句存到txt中
+		String file  = outdir+ papername+".txt";
+		CSVUtils.exportCsv(file, dataList);
 	}
 
 	private static String[] getid(String id) {
@@ -140,12 +149,12 @@ public class StringSplice {
 		System.out.println("citation:" + citation);
 		System.out.println("context:" + context);
 		Connection con = SQLConnection.connection("root", "123456");
-		String sql = "select * from info1 where id = ?;";
+		String sql = "select * from newinfo where id = ?;";
 		if (SQLConnection.findByAuthorAndYear(sql, con, id)) {
 			if(!SQLConnection.RESULT.getString(2).contains(citation)){
 				String s2 = SQLConnection.RESULT.getString(2) + citation;
 				String s3 = SQLConnection.RESULT.getString(3) + context;
-				String updateSQL = "update info1 set citation = ?, context = ? where id = ?;";
+				String updateSQL = "update newinfo set citation = ?, context = ? where id = ?;";
 				PreparedStatement pre = con.prepareStatement(updateSQL);
 				pre.setString(1, s2);
 				pre.setString(2, s3);
@@ -154,7 +163,7 @@ public class StringSplice {
 			}
 			
 		} else {
-			String insertSQL = "insert into info1 values(?,?,?);";
+			String insertSQL = "insert into newinfo values(?,?,?);";
 			PreparedStatement pre = con.prepareStatement(insertSQL);
 			pre.setString(1, id);
 			pre.setString(2, citation);

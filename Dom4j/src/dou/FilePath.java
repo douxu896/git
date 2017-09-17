@@ -29,13 +29,14 @@ public class FilePath  {
 				file = file + File.separator;
 			}
 			if (dir.mkdirs()) {// 创建目标目录
-				System.out.println("创建CSV目录成功！" + file);
+				System.out.println("创建数据目录成功！" + file);
 				return true;
 			} else {
-				System.out.println("创建CSV目录失败！");
+				System.out.println("创建数据目录失败！");
 				return false;
 			}
 	}
+	 //suffix为文件后缀名
 	  public static List<String> getListFiles(String path, String suffix, boolean isdepth) {  
     	  List<String> lstFileNames = new ArrayList<String>();  
     	  File file = new File(path);  

@@ -21,7 +21,7 @@ import org.dom4j.io.SAXReader;
  * </p>
  * 
  * @author <a href="bjtu:15121684@bjtu.edu.cn">Emily </a>
- * @version $Revision: 2.0 $
+ * @version $Revision: 3.0 store in txt $
  */
 public class Dom {
 
@@ -33,36 +33,37 @@ public class Dom {
 		/** input path */
 		// String inpath =
 		// "/Users/douxu/Desktop/xml/Acupunct_Med/Acupunct_Med_2010_Jun_1_28(2)_78-82.nxml";
-		String inpath = "/Users/douxu/Desktop/Citationnum/1/Acta_Neuropathol";
-		String outfile = File.separator + "Users" + File.separator + "douxu" + File.separator + "Desktop"
-				+ File.separator + "CSV";
-		FilePath.createDir(outfile);
+		String inpath = "/Users/douxu/Desktop/Citationnum/1/Acta_Naturae";
+		String outdir = File.separator + "Users" + File.separator + "douxu" + File.separator + "Desktop"
+				+ File.separator + "dataall"+ File.separator ;
+		FilePath.createDir(outdir);
 		String csvname = "data.csv";
-		String subfile = outfile + File.separator + csvname;
+		String subfile = outdir + csvname;
 		List<String> file = FilePath.getListFiles(inpath, "", true);
-		Iterator<String> it = file.iterator();
-		while (it.hasNext()) {
+		Iterator<String> it = file.iterator();	
+		while (it.hasNext()) {		
 			String filename = (String) it.next();
 			if (new File(filename).exists()) {
 				Document doc = reader.read(new File(filename));
 				System.out.println(filename);
-				papersnum++;
 				Element title = (Element) doc.selectObject("/article/front/article-meta/title-group/article-title");
-				System.out.println(title.getName() + ":" + title.getText());
+				System.out.println((papersnum++)+":"+title.getName() + ":" + title.getText());
 				int num = title.getText().length();
 				String name = null;
-				if (num > 20) {
-					name = title.getText().substring(0, 20);
-				} else {
-					name = title.getText().substring(0, num);
-				}
+				name = title.getText();
+				//存到数据库的写法 id = name+papersum
+				//文件名长度不能超过250
+				if (num > 245) { 
+					name = name.substring(0, 244);
+				} 
+				name = name.replaceAll("/", " ");	
 				// Element abstractt = (Element)
 				// doc.selectObject("/article/front/article-meta/abstract");
 				// Text(abstractt);
 				/** use xpath to location main body */
 				Element body = (Element) doc.selectObject("article/body");
 				/** deal with the context of abstract and main body */
-				Text(body, name + papersnum);
+				Text(body, name,outdir+papersnum);
 			}
 		}
 	}
@@ -76,16 +77,16 @@ public class Dom {
 	 *
 	 * @return void
 	 */
-	private static void Text(Element element, String papername) {
+	private static void Text(Element element, String papername,String outdir) {
 		Iterator it = element.elementIterator();
 		while (it.hasNext()) {
 			Element ele = (Element) it.next();
 			/** if ele is paragraph ,then get text */
 			if (ele.getName().equals("p")) {
-			     paragraph(ele, papername);
-				Text(ele, papername);
+			     paragraph(ele, papername,outdir);
+				Text(ele, papername,outdir);
 			} else {
-				Text(ele, papername);
+				Text(ele, papername,outdir);
 			}
 		}
 	}
@@ -104,7 +105,7 @@ public class Dom {
 	 * @throws IOException
 	 *             e
 	 */
-	private static void paragraph(Element ele, String papername) {
+	private static void paragraph(Element ele, String papername,String outdir) {
 		// TODO 自动生成的方法存根
 		int num = ele.content().size();
 		List content = ele.content();
@@ -120,7 +121,7 @@ public class Dom {
 		/** splice the text */
 		try {
 			// System.out.println(sb.toString());
-			StringSplice.stringSplice(sb.toString(), papername);
+			StringSplice.stringSplice(sb.toString(), papername,outdir);
 		} catch (IllegalFormatException | SQLException | IOException e) {
 			// TODO 自动生成的 catch 块
 			e.printStackTrace();
